@@ -1077,10 +1077,16 @@ static void *forth_md5_hex (void **IP, struct forth_stack *st) {
   }
 
   char s[33];
-  if (1) {
-    st->top = old_stack_top;
-    return failf (st, "md5_hex: convert_to_hex failed");
-  }
+
+  int i;
+  for (i=0; i<16; i++)
+  sprintf(s+i*2, "%02x", out[i]);
+  s[32]=0;
+
+  // if (1) {
+  //   st->top = old_stack_top;
+  //   return failf (st, "md5_hex: convert_to_hex failed");
+  // }
 
   free_stack (st, st->top + 1, old_stack_top);
 
