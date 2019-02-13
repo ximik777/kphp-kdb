@@ -318,7 +318,13 @@ bool f$openssl_public_encrypt (const string &data, string &result, const string 
     result = string();
     return false;
   }
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA2) {
+#else
+  if (EVP_PKEY_id (pkey) != EVP_PKEY_RSA && EVP_PKEY_id (pkey) != EVP_PKEY_RSA2) {
+#endif
+
     if (!from_cache) {
       EVP_PKEY_free (pkey);
     }
@@ -332,8 +338,17 @@ bool f$openssl_public_encrypt (const string &data, string &result, const string 
   int key_size = EVP_PKEY_size (pkey);
   php_assert (PHP_BUF_LEN >= key_size);
 
+  
+
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   if (RSA_public_encrypt ((int)data.size(), reinterpret_cast <const unsigned char *> (data.c_str()), 
                           reinterpret_cast <unsigned char *> (php_buf), pkey->pkey.rsa, RSA_PKCS1_PADDING) != key_size) {
+#else
+  if (RSA_public_encrypt ((int)data.size(), reinterpret_cast <const unsigned char *> (data.c_str()), 
+                          reinterpret_cast <unsigned char *> (php_buf), EVP_PKEY_get0_RSA (pkey), RSA_PKCS1_PADDING) != key_size) {
+#endif
+    
     if (!from_cache) {
       EVP_PKEY_free (pkey);
     }
@@ -372,7 +387,8 @@ bool f$openssl_private_decrypt (const string &data, string &result, const string
     php_warning ("Parameter key is not a valid private key");
     return false;
   }
-  if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA2) {
+
+  if (EVP_PKEY_id (pkey) != EVP_PKEY_RSA && EVP_PKEY_id (pkey) != EVP_PKEY_RSA2) {
     if (!from_cache) {
       EVP_PKEY_free (pkey);
     }
@@ -385,7 +401,7 @@ bool f$openssl_private_decrypt (const string &data, string &result, const string
   php_assert (PHP_BUF_LEN >= key_size);
 
   int len = RSA_private_decrypt ((int)data.size(), reinterpret_cast <const unsigned char *> (data.c_str()),
-                                 reinterpret_cast <unsigned char *> (php_buf), pkey->pkey.rsa, RSA_PKCS1_PADDING);
+                                 reinterpret_cast <unsigned char *> (php_buf), EVP_PKEY_get0_RSA (pkey), RSA_PKCS1_PADDING);
   if (!from_cache) {
     EVP_PKEY_free (pkey);
   }
